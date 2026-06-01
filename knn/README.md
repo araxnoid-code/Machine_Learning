@@ -2,7 +2,7 @@
 Machine Learning Algorithm
 
 ```rust
-use knn::k_nearest_neighbor;
+use knn::{Distance, k_nearest_neighbor};
 
 fn main() {
     let datasets = [
@@ -16,6 +16,6 @@ fn main() {
     let labels = [0, 0, 0, 1, 1, 1];
     let input = [[75., 80.], [55., 63.], [65., 58.]];
 
-    k_nearest_neighbor(3, datasets, labels, 2, input);
+    k_nearest_neighbor(3, datasets, labels, 2, Distance::Euclidean, input);
 }
 ```
