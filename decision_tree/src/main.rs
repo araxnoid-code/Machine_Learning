@@ -213,14 +213,19 @@ fn build<'a, const FEATURE_COUNT: usize>(
     // SPLITTING
     let max_idx = max.unwrap().2;
     let mut features_left = vec![];
-    let mut features_right = vec![];
+    let mut labels_left = vec![];
 
-    for feature in features {
+    let mut features_right = vec![];
+    let mut labels_right = vec![];
+
+    for (idx, feature) in features.iter().enumerate() {
         if let ConditionArg::Boolean(status) = feature[max_idx] {
             if status {
                 features_right.push(*feature);
+                labels_right.push(labels[idx]);
             } else {
                 features_left.push(*feature);
+                labels_left.push(labels[idx]);
             }
         }
     }
@@ -238,12 +243,17 @@ fn build<'a, const FEATURE_COUNT: usize>(
     // return Child::Class(1);
     let node = Node {
         condition: max.unwrap().1,
-        left: Box::new(build(feature_type, feature_len - 1, &features_left, labels)),
+        left: Box::new(build(
+            feature_type,
+            feature_len - 1,
+            &features_left,
+            &labels_left,
+        )),
         right: Box::new(build(
             feature_type,
             feature_len - 1,
             &features_right,
-            labels,
+            &labels_right,
         )),
     };
 
