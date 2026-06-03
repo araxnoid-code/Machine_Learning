@@ -1,5 +1,7 @@
 use std::{array, default, fmt::Debug};
 
+const E: f64 = 0.000000000001;
+
 fn main() {
     let feature_type = [
         ConditionType::Boolean,
@@ -116,17 +118,24 @@ fn build<'a, const FEATURE_COUNT: usize>(
     features: &[[ConditionArg; FEATURE_COUNT]],
     labels: &[usize],
 ) -> Child<'a> {
-    if feature_len == 0 {
-        for feature in features {
-            println!("{:?}", feature);
-        }
-        println!("=================");
+    if feature_len == 0 || feature_len == 2 {
+        // for feature in features {
+        //     println!("{:?}", feature);
+        // }
+
+        // println!("=====");
         return Child::Class(0);
     }
+    println!();
+    println!("ITER!!!");
+    println!();
 
     let mut max: Option<(f64, &ConditionType, usize)> = None;
+    // println!("feature_type: {:?}", feature_type);
+
     for scores_idx in 0..feature_len {
         let (con_type, column) = feature_type[scores_idx];
+        // println!("column choice: {}", column);
 
         if let ConditionType::Boolean = con_type {
             // false [0, 1]
@@ -152,27 +161,26 @@ fn build<'a, const FEATURE_COUNT: usize>(
 
             // entropy
             // parent
-            let parent_total = features.len() as f64;
-
+            let parent_total = features.len() as f64 + E;
             let category_zero = (false_result[0] + true_result[0]) as f64;
             let category_one = (false_result[1] + true_result[1]) as f64;
             let parent_entropy = -(category_zero / parent_total)
-                * (category_zero / parent_total).log2()
-                - (category_one / parent_total) * (category_one / parent_total).log2();
+                * ((category_zero / parent_total) + E).log2()
+                - (category_one / parent_total) * ((category_one / parent_total) + E).log2();
 
             // left
-            let left_total = (false_result[0] + false_result[1]) as f64;
+            let left_total = (false_result[0] + false_result[1]) as f64 + E;
             let left_entropy = -(false_result[0] as f64 / left_total)
-                * (false_result[0] as f64 / left_total).log2()
+                * ((false_result[0] as f64 / left_total) + E).log2()
                 - (false_result[1] as f64 / left_total)
-                    * (false_result[1] as f64 / left_total).log2();
+                    * ((false_result[1] as f64 / left_total) + E).log2();
 
             // right
-            let right_total = (true_result[0] + true_result[1]) as f64;
+            let right_total = (true_result[0] + true_result[1]) as f64 + E;
             let right_entropy = -(true_result[0] as f64 / right_total)
-                * (true_result[0] as f64 / right_total).log2()
+                * ((true_result[0] as f64 / right_total) + E).log2()
                 - (true_result[1] as f64 / right_total)
-                    * (true_result[1] as f64 / right_total).log2();
+                    * ((true_result[1] as f64 / right_total) + E).log2();
 
             // information gain
             let ig = parent_entropy
@@ -183,27 +191,27 @@ fn build<'a, const FEATURE_COUNT: usize>(
                 if max.0 < ig {
                     max.0 = ig;
                     max.1 = con_type;
-                    max.2 = column;
+                    max.2 = scores_idx;
                 }
             } else {
-                max = Some((ig, con_type, column));
+                max = Some((ig, con_type, scores_idx));
             }
 
-            // println!("raw result:");
-            // println!("false compunent: {:?}", false_result);
-            // println!("true compunent: {:?}", true_result);
-            // println!("entropy:");
-            // println!("parent entropy: {}", parent_entropy);
-            // println!("left entropy: {}", left_entropy);
-            // println!("right entropy: {}", right_entropy);
-            // println!("information gain: {}", ig);
+            println!("\nraw result:");
+            println!("false compunent: {:?}", false_result);
+            println!("true compunent: {:?}", true_result);
+            println!("entropy:");
+            println!("parent entropy: {}", parent_entropy);
+            println!("left entropy: {}", left_entropy);
+            println!("right entropy: {}", right_entropy);
+            println!("information gain: {}", ig);
         }
-        // println!("====");
+        println!("====");
     }
 
-    // println!("column choice for condition is {:?}", max);
-    // feature_type.swap(max.unwrap().2, feature_len - 1);
-    // println!("features status now: {:?}", feature_type);
+    println!("column choice for condition is {:?}", max);
+    feature_type.swap(max.unwrap().2, feature_len - 1);
+    println!("features status now: {:?}", feature_type);
 
     // println!("features: ");
     // for feature in features {
@@ -232,29 +240,43 @@ fn build<'a, const FEATURE_COUNT: usize>(
 
     // println!("after splitting");
     // println!("left");
-    // for feature in features_left {
+    // for feature in &features_left {
     //     println!("{:?}", feature);
     // }
     // println!("right");
-    // for feature in features_right {
+    // for feature in &features_right {
     //     println!("{:?}", feature);
+    // }
+
+    // if features_left.is_empty() {
+    //     println!("left empty!");
+    //     for feature in &features_right {
+    //         println!("{:?}", feature);
+    //     }
+    // } else if features_right.is_empty() {
+    //     println!("right empty!");
+    //     println!("len {}", feature_len);
+    //     for feature in &features_left {
+    //         println!("{:?}", feature);
+    //     }
     // }
 
     // return Child::Class(1);
     let node = Node {
         condition: max.unwrap().1,
-        left: Box::new(build(
-            feature_type,
-            feature_len - 1,
-            &features_left,
-            &labels_left,
-        )),
+        // left: Box::new(build(
+        //     feature_type,
+        //     feature_len - 1,
+        //     &features_left,
+        //     &labels_left,
+        // )),
         right: Box::new(build(
             feature_type,
             feature_len - 1,
             &features_right,
             &labels_right,
         )),
+        left: Box::new(Child::Class(0)),
     };
 
     Child::Node(node)
