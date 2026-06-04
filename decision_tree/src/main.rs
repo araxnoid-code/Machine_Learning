@@ -1,6 +1,6 @@
 use std::{array, default, fmt::Debug};
 
-const E: f64 = 0.000000000001;
+const EPSILON: f64 = 0.000000000001;
 
 fn main() {
     let feature_type = [
@@ -72,123 +72,231 @@ enum ConditionType {
     Boolean,
 }
 
+impl ConditionType {
+    pub fn create_condition_node(&self, feature_idx: usize) -> ConditionNode {
+        match self {
+            ConditionType::Boolean => ConditionNode::Boolean(Feature(feature_idx)),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy)]
 enum ConditionArg {
     Boolean(bool),
 }
 
 #[derive(Debug)]
-enum Child<'a> {
-    Node(Node<'a>),
+struct Feature(usize);
+
+#[derive(Debug)]
+enum ConditionNode {
+    Boolean(Feature),
+}
+
+#[derive(Debug)]
+enum Child {
+    Node(Node),
     Class(usize),
 }
 
 #[derive(Debug)]
-struct Node<'a> {
-    condition: &'a ConditionType,
-    left: Box<Child<'a>>,
-    right: Box<Child<'a>>,
+struct Node {
+    condition: ConditionNode,
+    left: Box<Child>,
+    right: Box<Child>,
 }
 
 fn build<const FEATURES_COUNT: usize>(
     labeled_features: &[(&[ConditionArg; FEATURES_COUNT], usize)],
     mut indexed_feature_type: [(&ConditionType, usize); FEATURES_COUNT],
     able_len: usize,
-) {
+) -> Child {
+    // println!();
+    // println!("ITER!!!!!!!!!!!!!!!!!! ITER!!!!!!!!!!!!!!!!!!");
+    // println!();
+
     let mut minimum_score = None;
     for column in 0..able_len {
         let (column_type, column_idx) = indexed_feature_type[column];
-        println!("column index: {}", column_idx);
+        // println!("column index: {}", column_idx);
 
         if let ConditionType::Boolean = column_type {
             // left (false)
-            let mut left_result = [0, 0];
-            let mut right_result = [0, 0];
+            let mut left_result = [0.0001, 0.0001];
+            let mut right_result = [0.0001, 0.0001];
 
             for (feature, label) in labeled_features {
-                if let ConditionArg::Boolean(status) = feature[column] {
+                // println!("{:?}", feature[column_idx]);
+
+                if let ConditionArg::Boolean(status) = feature[column_idx] {
                     if status {
-                        right_result[*label] += 1;
+                        right_result[*label] += 1.;
                     } else {
-                        left_result[*label] += 1;
+                        left_result[*label] += 1.;
                     }
                 }
             }
 
             // left entropy
-            let left_total = (left_result[0] + left_result[1]) as f64;
-            let left_entropy = -(left_result[0] as f64 / left_total)
-                * (left_result[0] as f64 / left_total).log2()
-                - (left_result[1] as f64 / left_total)
-                    * (left_result[1] as f64 / left_total).log2();
+            let mut left_empty = None;
+            let left_total = left_result[0] + left_result[1];
+            if left_total == (0.0001 + 0.0001) {
+                let classification =
+                    if right_result[0] + left_result[0] > right_result[1] + right_result[1] {
+                        1
+                    } else {
+                        0
+                    };
+                left_empty = Some(classification);
+            }
+
+            let left_entropy = if left_empty.is_none() {
+                -(left_result[0] as f64 / left_total) * (left_result[0] as f64 / left_total).log2()
+                    - (left_result[1] as f64 / left_total)
+                        * (left_result[1] as f64 / left_total).log2()
+            } else {
+                0.
+            };
 
             // right entropy
-            let right_total = (right_result[0] + right_result[1]) as f64;
-            let right_entropy = -(right_result[0] as f64 / right_total)
-                * (right_result[0] as f64 / right_total).log2()
-                - (right_result[1] as f64 / right_total)
-                    * (right_result[1] as f64 / right_total).log2();
+            let mut right_empty = None;
+            let right_total = right_result[0] + right_result[1];
+            if right_total == (0.0001 + 0.0001) {
+                let classification =
+                    if right_result[0] + left_result[0] > right_result[1] + right_result[1] {
+                        1
+                    } else {
+                        0
+                    };
+                right_empty = Some(classification);
+            }
+
+            let right_entropy = if right_empty.is_none() {
+                -(right_result[0] as f64 / right_total)
+                    * (right_result[0] as f64 / right_total).log2()
+                    - (right_result[1] as f64 / right_total)
+                        * (right_result[1] as f64 / right_total).log2()
+            } else {
+                0.
+            };
 
             // score
             let parent_total = labeled_features.len() as f64;
             let score = (left_total / parent_total) * left_entropy
                 + (right_total / parent_total) * right_entropy;
 
-            println!("raw result:");
-            println!("left result: {:?}", left_result);
-            println!("right result: {:?}", right_result);
-            println!("entropy:");
-            println!("left_entropy : {:?}", left_entropy);
-            println!("right_entropy : {:?}", right_entropy);
-            println!("score : {:?}", score);
+            // println!("raw result:");
+            // println!("left total: {:?}", left_total);
+            // println!("left result: {:?}", left_result);
+            // println!("right total: {:?}", right_total);
+            // println!("right result: {:?}", right_result);
+            // println!("entropy:");
+            // println!("left_entropy : {:?}", left_entropy);
+            // println!("right_entropy : {:?}", right_entropy);
+            // println!("score : {:?}", score);
 
-            if let Some((min_score, min_column)) = &mut minimum_score {
+            if let Some((min_score, min_column, idx, min_left_empty, min_right_empty)) =
+                &mut minimum_score
+            {
                 if *min_score > score {
                     *min_score = score;
-                    *min_column = column;
+                    *min_column = column_idx;
+                    *idx = column;
+                    *min_left_empty = left_empty;
+                    *min_right_empty = right_empty;
                 }
             } else {
-                minimum_score = Some((score, column));
+                minimum_score = Some((score, column_idx, column, left_empty, right_empty));
             }
         }
 
-        println!("===========================");
+        // println!("===========================");
     }
-    println!("minimum features is {:?}", minimum_score.unwrap());
+    // println!("minimum features is {:?}", minimum_score.unwrap());
 
     // swap
-    indexed_feature_type.swap(minimum_score.unwrap().1, able_len - 1);
+    let (condition_type, idx_feature) = indexed_feature_type[minimum_score.unwrap().2];
+    indexed_feature_type.swap(minimum_score.unwrap().2, able_len - 1);
 
     // split
     let mut left_features = vec![];
     let mut right_features = vec![];
 
     let column = minimum_score.unwrap().1;
+
+    let mut left_result = [1, 1];
+    let mut right_result = [1, 1];
     for (feature, label) in labeled_features {
         if let ConditionArg::Boolean(status) = feature[column] {
             if status {
                 right_features.push((*feature, *label));
+                right_result[*label] += 1;
             } else {
                 left_features.push((*feature, *label));
+                left_result[*label] += 1;
             }
         }
     }
 
-    println!("before splitting");
-    for feature in labeled_features {
-        println!("{:?}", feature);
-    }
+    // println!("before splitting");
+    // for feature in labeled_features {
+    //     println!("{:?}", feature);
+    // }
 
-    println!("after splitting");
-    println!("left:");
-    for feature in left_features {
-        println!("{:?}", feature);
-    }
+    // println!("after splitting");
+    // println!("left:");
+    // for feature in &left_features {
+    //     println!("{:?}", feature);
+    // }
 
-    println!("right:");
-    for feature in right_features {
-        println!("{:?}", feature);
-    }
+    // println!("right:");
+    // for feature in &right_features {
+    //     println!("{:?}", feature);
+    // }
+
+    let (left, right) = if (able_len - 1) == 0 {
+        let left_klasifikasi = if let Some(left_empty) = minimum_score.unwrap().3 {
+            left_empty
+        } else if left_result[0] > left_result[1] {
+            0
+        } else {
+            1
+        };
+
+        let right_klasifikasi = if let Some(right_empty) = minimum_score.unwrap().4 {
+            right_empty
+        } else if right_result[0] > right_result[1] {
+            0
+        } else {
+            1
+        };
+
+        (
+            Box::new(Child::Class(left_klasifikasi)),
+            Box::new(Child::Class(right_klasifikasi)),
+        )
+    } else {
+        (
+            if let Some(left_empty) = minimum_score.unwrap().3 {
+                Box::new(Child::Class(left_empty))
+            } else {
+                Box::new(build(&left_features, indexed_feature_type, able_len - 1))
+            },
+            if let Some(right_empty) = minimum_score.unwrap().4 {
+                Box::new(Child::Class(right_empty))
+            } else {
+                Box::new(build(&right_features, indexed_feature_type, able_len - 1))
+            },
+        )
+    };
+
+    let node = Node {
+        condition: condition_type.create_condition_node(idx_feature),
+        left: left,
+        right: right,
+    };
+
+    return Child::Node(node);
 }
 
 fn build_tree<const FEATURES_COUNT: usize>(
@@ -205,5 +313,6 @@ fn build_tree<const FEATURES_COUNT: usize>(
     let indexed_feature_type: [(&ConditionType, usize); FEATURES_COUNT] =
         array::from_fn(|idx| (&feature_type[idx], idx));
 
-    build(&labeled_features, indexed_feature_type, FEATURES_COUNT);
+    let node = build(&labeled_features, indexed_feature_type, FEATURES_COUNT);
+    println!("{:#?}", node);
 }
