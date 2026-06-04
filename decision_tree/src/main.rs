@@ -7,6 +7,9 @@ fn main() {
         ConditionType::Boolean,
         ConditionType::Boolean,
         ConditionType::Boolean,
+        ConditionType::Boolean,
+        ConditionType::Boolean,
+        ConditionType::Boolean,
     ];
 
     let features = [
@@ -14,14 +17,55 @@ fn main() {
             ConditionArg::Boolean(true),
             ConditionArg::Boolean(true),
             ConditionArg::Boolean(true),
-        ],
-        [
             ConditionArg::Boolean(true),
             ConditionArg::Boolean(true),
             ConditionArg::Boolean(true),
         ],
         [
             ConditionArg::Boolean(true),
+            ConditionArg::Boolean(true),
+            ConditionArg::Boolean(true),
+            ConditionArg::Boolean(true),
+            ConditionArg::Boolean(false),
+            ConditionArg::Boolean(false),
+        ],
+        [
+            ConditionArg::Boolean(true),
+            ConditionArg::Boolean(true),
+            ConditionArg::Boolean(false),
+            ConditionArg::Boolean(true),
+            ConditionArg::Boolean(true),
+            ConditionArg::Boolean(true),
+        ],
+        [
+            ConditionArg::Boolean(true),
+            ConditionArg::Boolean(true),
+            ConditionArg::Boolean(true),
+            ConditionArg::Boolean(false),
+            ConditionArg::Boolean(true),
+            ConditionArg::Boolean(false),
+        ],
+        [
+            ConditionArg::Boolean(true),
+            ConditionArg::Boolean(true),
+            ConditionArg::Boolean(true),
+            ConditionArg::Boolean(false),
+            ConditionArg::Boolean(false),
+            ConditionArg::Boolean(true),
+        ],
+        [
+            ConditionArg::Boolean(true),
+            ConditionArg::Boolean(false),
+            ConditionArg::Boolean(true),
+            ConditionArg::Boolean(true),
+            ConditionArg::Boolean(true),
+            ConditionArg::Boolean(false),
+        ],
+        [
+            ConditionArg::Boolean(true),
+            ConditionArg::Boolean(false),
+            ConditionArg::Boolean(true),
+            ConditionArg::Boolean(true),
             ConditionArg::Boolean(false),
             ConditionArg::Boolean(true),
         ],
@@ -29,14 +73,71 @@ fn main() {
             ConditionArg::Boolean(false),
             ConditionArg::Boolean(true),
             ConditionArg::Boolean(true),
+            ConditionArg::Boolean(true),
+            ConditionArg::Boolean(true),
+            ConditionArg::Boolean(true),
         ],
         [
+            ConditionArg::Boolean(false),
+            ConditionArg::Boolean(true),
+            ConditionArg::Boolean(true),
             ConditionArg::Boolean(true),
             ConditionArg::Boolean(true),
             ConditionArg::Boolean(false),
         ],
         [
             ConditionArg::Boolean(false),
+            ConditionArg::Boolean(true),
+            ConditionArg::Boolean(false),
+            ConditionArg::Boolean(true),
+            ConditionArg::Boolean(true),
+            ConditionArg::Boolean(true),
+        ],
+        [
+            ConditionArg::Boolean(true),
+            ConditionArg::Boolean(false),
+            ConditionArg::Boolean(false),
+            ConditionArg::Boolean(true),
+            ConditionArg::Boolean(true),
+            ConditionArg::Boolean(false),
+        ],
+        [
+            ConditionArg::Boolean(true),
+            ConditionArg::Boolean(false),
+            ConditionArg::Boolean(false),
+            ConditionArg::Boolean(false),
+            ConditionArg::Boolean(true),
+            ConditionArg::Boolean(true),
+        ],
+        [
+            ConditionArg::Boolean(true),
+            ConditionArg::Boolean(false),
+            ConditionArg::Boolean(false),
+            ConditionArg::Boolean(false),
+            ConditionArg::Boolean(false),
+            ConditionArg::Boolean(false),
+        ],
+        [
+            ConditionArg::Boolean(false),
+            ConditionArg::Boolean(true),
+            ConditionArg::Boolean(false),
+            ConditionArg::Boolean(false),
+            ConditionArg::Boolean(true),
+            ConditionArg::Boolean(false),
+        ],
+        [
+            ConditionArg::Boolean(false),
+            ConditionArg::Boolean(true),
+            ConditionArg::Boolean(true),
+            ConditionArg::Boolean(false),
+            ConditionArg::Boolean(false),
+            ConditionArg::Boolean(true),
+        ],
+        [
+            ConditionArg::Boolean(false),
+            ConditionArg::Boolean(false),
+            ConditionArg::Boolean(true),
+            ConditionArg::Boolean(true),
             ConditionArg::Boolean(false),
             ConditionArg::Boolean(false),
         ],
@@ -44,13 +145,6 @@ fn main() {
             ConditionArg::Boolean(false),
             ConditionArg::Boolean(false),
             ConditionArg::Boolean(true),
-        ],
-        [
-            ConditionArg::Boolean(true),
-            ConditionArg::Boolean(false),
-            ConditionArg::Boolean(false),
-        ],
-        [
             ConditionArg::Boolean(false),
             ConditionArg::Boolean(true),
             ConditionArg::Boolean(false),
@@ -58,13 +152,100 @@ fn main() {
         [
             ConditionArg::Boolean(false),
             ConditionArg::Boolean(false),
+            ConditionArg::Boolean(true),
+            ConditionArg::Boolean(false),
+            ConditionArg::Boolean(false),
+            ConditionArg::Boolean(true),
+        ],
+        [
+            ConditionArg::Boolean(false),
+            ConditionArg::Boolean(false),
+            ConditionArg::Boolean(false),
+            ConditionArg::Boolean(true),
+            ConditionArg::Boolean(false),
+            ConditionArg::Boolean(true),
+        ],
+        [
+            ConditionArg::Boolean(false),
+            ConditionArg::Boolean(false),
+            ConditionArg::Boolean(false),
+            ConditionArg::Boolean(false),
+            ConditionArg::Boolean(true),
             ConditionArg::Boolean(false),
         ],
     ];
 
-    let labels = [1, 1, 1, 1, 1, 0, 0, 0, 0, 0];
+    let labels = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
-    build_tree(feature_type, &features, &labels);
+    let tree = build_tree(feature_type, &features, &labels);
+
+    for (feature, label) in features.iter().zip(labels.iter()) {
+        let pred = tree.input(*feature);
+        println!("pred: {} | actual: {}", pred, label);
+    }
+
+    // let feature_type = [
+    //     ConditionType::Boolean,
+    //     ConditionType::Boolean,
+    //     ConditionType::Boolean,
+    // ];
+
+    // let features = [
+    //     [
+    //         ConditionArg::Boolean(true),
+    //         ConditionArg::Boolean(true),
+    //         ConditionArg::Boolean(true),
+    //     ],
+    //     [
+    //         ConditionArg::Boolean(true),
+    //         ConditionArg::Boolean(true),
+    //         ConditionArg::Boolean(true),
+    //     ],
+    //     [
+    //         ConditionArg::Boolean(true),
+    //         ConditionArg::Boolean(false),
+    //         ConditionArg::Boolean(true),
+    //     ],
+    //     [
+    //         ConditionArg::Boolean(false),
+    //         ConditionArg::Boolean(true),
+    //         ConditionArg::Boolean(true),
+    //     ],
+    //     [
+    //         ConditionArg::Boolean(true),
+    //         ConditionArg::Boolean(true),
+    //         ConditionArg::Boolean(false),
+    //     ],
+    //     [
+    //         ConditionArg::Boolean(false),
+    //         ConditionArg::Boolean(false),
+    //         ConditionArg::Boolean(false),
+    //     ],
+    //     [
+    //         ConditionArg::Boolean(false),
+    //         ConditionArg::Boolean(false),
+    //         ConditionArg::Boolean(true),
+    //     ],
+    //     [
+    //         ConditionArg::Boolean(true),
+    //         ConditionArg::Boolean(false),
+    //         ConditionArg::Boolean(false),
+    //     ],
+    //     [
+    //         ConditionArg::Boolean(false),
+    //         ConditionArg::Boolean(true),
+    //         ConditionArg::Boolean(false),
+    //     ],
+    //     [
+    //         ConditionArg::Boolean(false),
+    //         ConditionArg::Boolean(false),
+    //         ConditionArg::Boolean(false),
+    //     ],
+    // ];
+
+    // let labels = [1, 1, 1, 1, 1, 0, 0, 0, 0, 0];
+
+    // build_tree(feature_type, &features, &labels);
 }
 
 #[derive(Debug)]
@@ -94,23 +275,47 @@ enum ConditionNode {
 }
 
 #[derive(Debug)]
-enum Child {
-    Node(Node),
+enum Child<const FEATURES_COUNT: usize> {
+    Node(Node<FEATURES_COUNT>),
     Class(usize),
 }
 
+impl<const FEATURES_COUNT: usize> Child<FEATURES_COUNT> {
+    pub fn input(&self, input: [ConditionArg; FEATURES_COUNT]) -> usize {
+        match self {
+            Child::Node(node) => {
+                //
+                if let ConditionNode::Boolean(Feature(idx)) = &node.condition {
+                    if let ConditionArg::Boolean(status) = input[*idx] {
+                        if status {
+                            node.right.input(input)
+                        } else {
+                            node.left.input(input)
+                        }
+                    } else {
+                        panic!()
+                    }
+                } else {
+                    panic!()
+                }
+            }
+            Child::Class(class) => *class,
+        }
+    }
+}
+
 #[derive(Debug)]
-struct Node {
+struct Node<const FEATURES_COUNT: usize> {
     condition: ConditionNode,
-    left: Box<Child>,
-    right: Box<Child>,
+    left: Box<Child<FEATURES_COUNT>>,
+    right: Box<Child<FEATURES_COUNT>>,
 }
 
 fn build<const FEATURES_COUNT: usize>(
     labeled_features: &[(&[ConditionArg; FEATURES_COUNT], usize)],
     mut indexed_feature_type: [(&ConditionType, usize); FEATURES_COUNT],
     able_len: usize,
-) -> Child {
+) -> Child<FEATURES_COUNT> {
     // println!();
     // println!("ITER!!!!!!!!!!!!!!!!!! ITER!!!!!!!!!!!!!!!!!!");
     // println!();
@@ -122,30 +327,30 @@ fn build<const FEATURES_COUNT: usize>(
 
         if let ConditionType::Boolean = column_type {
             // left (false)
-            let mut left_result = [0.0001, 0.0001];
-            let mut right_result = [0.0001, 0.0001];
+            let mut left_result = [0, 0];
+            let mut right_result = [0, 0];
 
             for (feature, label) in labeled_features {
                 // println!("{:?}", feature[column_idx]);
 
                 if let ConditionArg::Boolean(status) = feature[column_idx] {
                     if status {
-                        right_result[*label] += 1.;
+                        right_result[*label] += 1;
                     } else {
-                        left_result[*label] += 1.;
+                        left_result[*label] += 1;
                     }
                 }
             }
 
             // left entropy
             let mut left_empty = None;
-            let left_total = left_result[0] + left_result[1];
-            if left_total == (0.0001 + 0.0001) {
+            let left_total = (left_result[0] + left_result[1]) as f64;
+            if left_total == 0. {
                 let classification =
-                    if right_result[0] + left_result[0] > right_result[1] + right_result[1] {
-                        1
-                    } else {
+                    if right_result[0] + left_result[0] > left_result[1] + right_result[1] {
                         0
+                    } else {
+                        1
                     };
                 left_empty = Some(classification);
             }
@@ -160,13 +365,13 @@ fn build<const FEATURES_COUNT: usize>(
 
             // right entropy
             let mut right_empty = None;
-            let right_total = right_result[0] + right_result[1];
-            if right_total == (0.0001 + 0.0001) {
+            let right_total = (right_result[0] + right_result[1]) as f64;
+            if right_total == 0. {
                 let classification =
-                    if right_result[0] + left_result[0] > right_result[1] + right_result[1] {
-                        1
-                    } else {
+                    if right_result[0] + left_result[0] > right_result[1] + left_result[1] {
                         0
+                    } else {
+                        1
                     };
                 right_empty = Some(classification);
             }
@@ -303,7 +508,7 @@ fn build_tree<const FEATURES_COUNT: usize>(
     feature_type: [ConditionType; FEATURES_COUNT],
     features: &[[ConditionArg; FEATURES_COUNT]],
     labels: &[usize],
-) {
+) -> Child<FEATURES_COUNT> {
     let labeled_features = features
         .iter()
         .enumerate()
@@ -314,5 +519,5 @@ fn build_tree<const FEATURES_COUNT: usize>(
         array::from_fn(|idx| (&feature_type[idx], idx));
 
     let node = build(&labeled_features, indexed_feature_type, FEATURES_COUNT);
-    println!("{:#?}", node);
+    node
 }
