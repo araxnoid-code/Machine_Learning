@@ -251,12 +251,20 @@ fn main() {
 #[derive(Debug)]
 enum ConditionType {
     Boolean,
+    Float,
 }
 
 impl ConditionType {
-    pub fn create_condition_node(&self, feature_idx: usize) -> ConditionNode {
+    pub fn create_condition_node(
+        &self,
+        feature_idx: usize,
+        float_value: Option<f64>,
+    ) -> ConditionNode {
         match self {
             ConditionType::Boolean => ConditionNode::Boolean(Feature(feature_idx)),
+            ConditionType::Float => {
+                ConditionNode::Float(Feature(feature_idx), float_value.unwrap_or(0.))
+            }
         }
     }
 }
@@ -264,6 +272,7 @@ impl ConditionType {
 #[derive(Debug, Clone, Copy)]
 enum ConditionArg {
     Boolean(bool),
+    Float(f64),
 }
 
 #[derive(Debug)]
@@ -272,6 +281,7 @@ struct Feature(usize);
 #[derive(Debug)]
 enum ConditionNode {
     Boolean(Feature),
+    Float(Feature, f64),
 }
 
 #[derive(Debug)]
@@ -321,98 +331,107 @@ fn build<const FEATURES_COUNT: usize>(
     // println!();
 
     let mut minimum_score = None;
-    for column in 0..able_len {
-        let (column_type, column_idx) = indexed_feature_type[column];
+    for able_idx in 0..able_len {
+        let (column_type, column_idx) = indexed_feature_type[able_idx];
         // println!("column index: {}", column_idx);
 
-        if let ConditionType::Boolean = column_type {
-            // left (false)
-            let mut left_result = [0, 0];
-            let mut right_result = [0, 0];
+        match column_type {
+            ConditionType::Boolean => {
+                // left (false)
+                let mut left_result = [0, 0];
+                let mut right_result = [0, 0];
 
-            for (feature, label) in labeled_features {
-                // println!("{:?}", feature[column_idx]);
+                for (row_idx, (feature, label)) in labeled_features.iter().enumerate() {
+                    // println!("{:?}", feature[column_idx]);
 
-                if let ConditionArg::Boolean(status) = feature[column_idx] {
-                    if status {
-                        right_result[*label] += 1;
+                    if let ConditionArg::Boolean(status) = feature[column_idx] {
+                        if status {
+                            right_result[*label] += 1;
+                        } else {
+                            left_result[*label] += 1;
+                        }
                     } else {
-                        left_result[*label] += 1;
+                        panic!(
+                            "Error, data type in row {} is Boolean but found Float in data sequence {}",
+                            column_idx, row_idx
+                        );
                     }
                 }
-            }
 
-            // left entropy
-            let mut left_empty = None;
-            let left_total = (left_result[0] + left_result[1]) as f64;
-            if left_total == 0. {
-                let classification =
-                    if right_result[0] + left_result[0] > left_result[1] + right_result[1] {
-                        0
-                    } else {
-                        1
-                    };
-                left_empty = Some(classification);
-            }
-
-            let left_entropy = if left_empty.is_none() {
-                -(left_result[0] as f64 / left_total) * (left_result[0] as f64 / left_total).log2()
-                    - (left_result[1] as f64 / left_total)
-                        * (left_result[1] as f64 / left_total).log2()
-            } else {
-                0.
-            };
-
-            // right entropy
-            let mut right_empty = None;
-            let right_total = (right_result[0] + right_result[1]) as f64;
-            if right_total == 0. {
-                let classification =
-                    if right_result[0] + left_result[0] > right_result[1] + left_result[1] {
-                        0
-                    } else {
-                        1
-                    };
-                right_empty = Some(classification);
-            }
-
-            let right_entropy = if right_empty.is_none() {
-                -(right_result[0] as f64 / right_total)
-                    * (right_result[0] as f64 / right_total).log2()
-                    - (right_result[1] as f64 / right_total)
-                        * (right_result[1] as f64 / right_total).log2()
-            } else {
-                0.
-            };
-
-            // score
-            let parent_total = labeled_features.len() as f64;
-            let score = (left_total / parent_total) * left_entropy
-                + (right_total / parent_total) * right_entropy;
-
-            // println!("raw result:");
-            // println!("left total: {:?}", left_total);
-            // println!("left result: {:?}", left_result);
-            // println!("right total: {:?}", right_total);
-            // println!("right result: {:?}", right_result);
-            // println!("entropy:");
-            // println!("left_entropy : {:?}", left_entropy);
-            // println!("right_entropy : {:?}", right_entropy);
-            // println!("score : {:?}", score);
-
-            if let Some((min_score, min_column, idx, min_left_empty, min_right_empty)) =
-                &mut minimum_score
-            {
-                if *min_score > score {
-                    *min_score = score;
-                    *min_column = column_idx;
-                    *idx = column;
-                    *min_left_empty = left_empty;
-                    *min_right_empty = right_empty;
+                // left entropy
+                let mut left_empty = None;
+                let left_total = (left_result[0] + left_result[1]) as f64;
+                if left_total == 0. {
+                    let classification =
+                        if right_result[0] + left_result[0] > left_result[1] + right_result[1] {
+                            0
+                        } else {
+                            1
+                        };
+                    left_empty = Some(classification);
                 }
-            } else {
-                minimum_score = Some((score, column_idx, column, left_empty, right_empty));
+
+                let left_entropy = if left_empty.is_none() {
+                    -(left_result[0] as f64 / left_total)
+                        * (left_result[0] as f64 / left_total).log2()
+                        - (left_result[1] as f64 / left_total)
+                            * (left_result[1] as f64 / left_total).log2()
+                } else {
+                    0.
+                };
+
+                // right entropy
+                let mut right_empty = None;
+                let right_total = (right_result[0] + right_result[1]) as f64;
+                if right_total == 0. {
+                    let classification =
+                        if right_result[0] + left_result[0] > right_result[1] + left_result[1] {
+                            0
+                        } else {
+                            1
+                        };
+                    right_empty = Some(classification);
+                }
+
+                let right_entropy = if right_empty.is_none() {
+                    -(right_result[0] as f64 / right_total)
+                        * (right_result[0] as f64 / right_total).log2()
+                        - (right_result[1] as f64 / right_total)
+                            * (right_result[1] as f64 / right_total).log2()
+                } else {
+                    0.
+                };
+
+                // score
+                let parent_total = labeled_features.len() as f64;
+                let score = (left_total / parent_total) * left_entropy
+                    + (right_total / parent_total) * right_entropy;
+
+                // println!("raw result:");
+                // println!("left total: {:?}", left_total);
+                // println!("left result: {:?}", left_result);
+                // println!("right total: {:?}", right_total);
+                // println!("right result: {:?}", right_result);
+                // println!("entropy:");
+                // println!("left_entropy : {:?}", left_entropy);
+                // println!("right_entropy : {:?}", right_entropy);
+                // println!("score : {:?}", score);
+
+                if let Some((min_score, min_column, idx, min_left_empty, min_right_empty)) =
+                    &mut minimum_score
+                {
+                    if *min_score > score {
+                        *min_score = score;
+                        *min_column = column_idx;
+                        *idx = able_idx;
+                        *min_left_empty = left_empty;
+                        *min_right_empty = right_empty;
+                    }
+                } else {
+                    minimum_score = Some((score, column_idx, able_idx, left_empty, right_empty));
+                }
             }
+            ConditionType::Float => {}
         }
 
         // println!("===========================");
@@ -496,7 +515,7 @@ fn build<const FEATURES_COUNT: usize>(
     };
 
     let node = Node {
-        condition: condition_type.create_condition_node(idx_feature),
+        condition: condition_type.create_condition_node(idx_feature, None),
         left: left,
         right: right,
     };
