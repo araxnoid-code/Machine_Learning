@@ -7,8 +7,6 @@ fn main() {
         ConditionType::Boolean,
         ConditionType::Boolean,
         ConditionType::Boolean,
-        ConditionType::Boolean,
-        ConditionType::Boolean,
     ];
 
     let features = [
@@ -16,40 +14,28 @@ fn main() {
             ConditionArg::Boolean(true),
             ConditionArg::Boolean(true),
             ConditionArg::Boolean(true),
+        ],
+        [
+            ConditionArg::Boolean(true),
+            ConditionArg::Boolean(true),
+            ConditionArg::Boolean(true),
+        ],
+        [
+            ConditionArg::Boolean(true),
+            ConditionArg::Boolean(false),
+            ConditionArg::Boolean(true),
+        ],
+        [
+            ConditionArg::Boolean(false),
             ConditionArg::Boolean(true),
             ConditionArg::Boolean(true),
         ],
         [
             ConditionArg::Boolean(true),
             ConditionArg::Boolean(true),
-            ConditionArg::Boolean(true),
-            ConditionArg::Boolean(false),
             ConditionArg::Boolean(false),
         ],
         [
-            ConditionArg::Boolean(true),
-            ConditionArg::Boolean(false),
-            ConditionArg::Boolean(true),
-            ConditionArg::Boolean(true),
-            ConditionArg::Boolean(false),
-        ],
-        [
-            ConditionArg::Boolean(false),
-            ConditionArg::Boolean(true),
-            ConditionArg::Boolean(true),
-            ConditionArg::Boolean(true),
-            ConditionArg::Boolean(false),
-        ],
-        [
-            ConditionArg::Boolean(true),
-            ConditionArg::Boolean(true),
-            ConditionArg::Boolean(false),
-            ConditionArg::Boolean(false),
-            ConditionArg::Boolean(true),
-        ],
-        [
-            ConditionArg::Boolean(false),
-            ConditionArg::Boolean(false),
             ConditionArg::Boolean(false),
             ConditionArg::Boolean(false),
             ConditionArg::Boolean(false),
@@ -58,13 +44,9 @@ fn main() {
             ConditionArg::Boolean(false),
             ConditionArg::Boolean(false),
             ConditionArg::Boolean(true),
-            ConditionArg::Boolean(false),
-            ConditionArg::Boolean(false),
         ],
         [
             ConditionArg::Boolean(true),
-            ConditionArg::Boolean(false),
-            ConditionArg::Boolean(false),
             ConditionArg::Boolean(false),
             ConditionArg::Boolean(false),
         ],
@@ -72,14 +54,10 @@ fn main() {
             ConditionArg::Boolean(false),
             ConditionArg::Boolean(true),
             ConditionArg::Boolean(false),
-            ConditionArg::Boolean(false),
-            ConditionArg::Boolean(true),
         ],
         [
             ConditionArg::Boolean(false),
             ConditionArg::Boolean(false),
-            ConditionArg::Boolean(false),
-            ConditionArg::Boolean(true),
             ConditionArg::Boolean(false),
         ],
     ];
@@ -112,185 +90,120 @@ struct Node<'a> {
     right: Box<Child<'a>>,
 }
 
-fn build<'a, const FEATURE_COUNT: usize>(
-    mut feature_type: [(&'a ConditionType, usize); FEATURE_COUNT],
-    feature_len: usize,
-    features: &[[ConditionArg; FEATURE_COUNT]],
-    labels: &[usize],
-) -> Child<'a> {
-    if feature_len == 0 || feature_len == 2 {
-        // for feature in features {
-        //     println!("{:?}", feature);
-        // }
+fn build<const FEATURES_COUNT: usize>(
+    labeled_features: &[(&[ConditionArg; FEATURES_COUNT], usize)],
+    mut indexed_feature_type: [(&ConditionType, usize); FEATURES_COUNT],
+    able_len: usize,
+) {
+    let mut minimum_score = None;
+    for column in 0..able_len {
+        let (column_type, column_idx) = indexed_feature_type[column];
+        println!("column index: {}", column_idx);
 
-        // println!("=====");
-        return Child::Class(0);
-    }
-    println!();
-    println!("ITER!!!");
-    println!();
+        if let ConditionType::Boolean = column_type {
+            // left (false)
+            let mut left_result = [0, 0];
+            let mut right_result = [0, 0];
 
-    let mut max: Option<(f64, &ConditionType, usize)> = None;
-    // println!("feature_type: {:?}", feature_type);
-
-    for scores_idx in 0..feature_len {
-        let (con_type, column) = feature_type[scores_idx];
-        // println!("column choice: {}", column);
-
-        if let ConditionType::Boolean = con_type {
-            // false [0, 1]
-            let mut false_result = [0, 0];
-
-            // true [0, 1]
-            let mut true_result = [0, 0];
-
-            for (row_idx, feature_row) in features.iter().enumerate() {
-                // println!("{:?} => {:?}", feature_row[column], labels[row_idx]);
-
-                let label_idx = labels[row_idx];
-                if let ConditionArg::Boolean(status) = feature_row[column] {
+            for (feature, label) in labeled_features {
+                if let ConditionArg::Boolean(status) = feature[column] {
                     if status {
-                        true_result[label_idx] += 1;
+                        right_result[*label] += 1;
                     } else {
-                        false_result[label_idx] += 1;
+                        left_result[*label] += 1;
                     }
-                } else {
-                    panic!()
                 }
             }
 
-            // entropy
-            // parent
-            let parent_total = features.len() as f64 + E;
-            let category_zero = (false_result[0] + true_result[0]) as f64;
-            let category_one = (false_result[1] + true_result[1]) as f64;
-            let parent_entropy = -(category_zero / parent_total)
-                * ((category_zero / parent_total) + E).log2()
-                - (category_one / parent_total) * ((category_one / parent_total) + E).log2();
+            // left entropy
+            let left_total = (left_result[0] + left_result[1]) as f64;
+            let left_entropy = -(left_result[0] as f64 / left_total)
+                * (left_result[0] as f64 / left_total).log2()
+                - (left_result[1] as f64 / left_total)
+                    * (left_result[1] as f64 / left_total).log2();
 
-            // left
-            let left_total = (false_result[0] + false_result[1]) as f64 + E;
-            let left_entropy = -(false_result[0] as f64 / left_total)
-                * ((false_result[0] as f64 / left_total) + E).log2()
-                - (false_result[1] as f64 / left_total)
-                    * ((false_result[1] as f64 / left_total) + E).log2();
+            // right entropy
+            let right_total = (right_result[0] + right_result[1]) as f64;
+            let right_entropy = -(right_result[0] as f64 / right_total)
+                * (right_result[0] as f64 / right_total).log2()
+                - (right_result[1] as f64 / right_total)
+                    * (right_result[1] as f64 / right_total).log2();
 
-            // right
-            let right_total = (true_result[0] + true_result[1]) as f64 + E;
-            let right_entropy = -(true_result[0] as f64 / right_total)
-                * ((true_result[0] as f64 / right_total) + E).log2()
-                - (true_result[1] as f64 / right_total)
-                    * ((true_result[1] as f64 / right_total) + E).log2();
+            // score
+            let parent_total = labeled_features.len() as f64;
+            let score = (left_total / parent_total) * left_entropy
+                + (right_total / parent_total) * right_entropy;
 
-            // information gain
-            let ig = parent_entropy
-                - (left_total / parent_total) * left_entropy
-                - (right_total / parent_total) * right_entropy;
-
-            if let Some(max) = &mut max {
-                if max.0 < ig {
-                    max.0 = ig;
-                    max.1 = con_type;
-                    max.2 = scores_idx;
-                }
-            } else {
-                max = Some((ig, con_type, scores_idx));
-            }
-
-            println!("\nraw result:");
-            println!("false compunent: {:?}", false_result);
-            println!("true compunent: {:?}", true_result);
+            println!("raw result:");
+            println!("left result: {:?}", left_result);
+            println!("right result: {:?}", right_result);
             println!("entropy:");
-            println!("parent entropy: {}", parent_entropy);
-            println!("left entropy: {}", left_entropy);
-            println!("right entropy: {}", right_entropy);
-            println!("information gain: {}", ig);
-        }
-        println!("====");
-    }
+            println!("left_entropy : {:?}", left_entropy);
+            println!("right_entropy : {:?}", right_entropy);
+            println!("score : {:?}", score);
 
-    println!("column choice for condition is {:?}", max);
-    feature_type.swap(max.unwrap().2, feature_len - 1);
-    println!("features status now: {:?}", feature_type);
-
-    // println!("features: ");
-    // for feature in features {
-    //     println!("{:?}", feature);
-    // }
-
-    // SPLITTING
-    let max_idx = max.unwrap().2;
-    let mut features_left = vec![];
-    let mut labels_left = vec![];
-
-    let mut features_right = vec![];
-    let mut labels_right = vec![];
-
-    for (idx, feature) in features.iter().enumerate() {
-        if let ConditionArg::Boolean(status) = feature[max_idx] {
-            if status {
-                features_right.push(*feature);
-                labels_right.push(labels[idx]);
+            if let Some((min_score, min_column)) = &mut minimum_score {
+                if *min_score > score {
+                    *min_score = score;
+                    *min_column = column;
+                }
             } else {
-                features_left.push(*feature);
-                labels_left.push(labels[idx]);
+                minimum_score = Some((score, column));
+            }
+        }
+
+        println!("===========================");
+    }
+    println!("minimum features is {:?}", minimum_score.unwrap());
+
+    // swap
+    indexed_feature_type.swap(minimum_score.unwrap().1, able_len - 1);
+
+    // split
+    let mut left_features = vec![];
+    let mut right_features = vec![];
+
+    let column = minimum_score.unwrap().1;
+    for (feature, label) in labeled_features {
+        if let ConditionArg::Boolean(status) = feature[column] {
+            if status {
+                right_features.push((*feature, *label));
+            } else {
+                left_features.push((*feature, *label));
             }
         }
     }
 
-    // println!("after splitting");
-    // println!("left");
-    // for feature in &features_left {
-    //     println!("{:?}", feature);
-    // }
-    // println!("right");
-    // for feature in &features_right {
-    //     println!("{:?}", feature);
-    // }
+    println!("before splitting");
+    for feature in labeled_features {
+        println!("{:?}", feature);
+    }
 
-    // if features_left.is_empty() {
-    //     println!("left empty!");
-    //     for feature in &features_right {
-    //         println!("{:?}", feature);
-    //     }
-    // } else if features_right.is_empty() {
-    //     println!("right empty!");
-    //     println!("len {}", feature_len);
-    //     for feature in &features_left {
-    //         println!("{:?}", feature);
-    //     }
-    // }
+    println!("after splitting");
+    println!("left:");
+    for feature in left_features {
+        println!("{:?}", feature);
+    }
 
-    // return Child::Class(1);
-    let node = Node {
-        condition: max.unwrap().1,
-        // left: Box::new(build(
-        //     feature_type,
-        //     feature_len - 1,
-        //     &features_left,
-        //     &labels_left,
-        // )),
-        right: Box::new(build(
-            feature_type,
-            feature_len - 1,
-            &features_right,
-            &labels_right,
-        )),
-        left: Box::new(Child::Class(0)),
-    };
-
-    Child::Node(node)
+    println!("right:");
+    for feature in right_features {
+        println!("{:?}", feature);
+    }
 }
 
-fn build_tree<const FEATURE_COUNT: usize>(
-    feature_type: [ConditionType; FEATURE_COUNT],
-    features: &[[ConditionArg; FEATURE_COUNT]],
+fn build_tree<const FEATURES_COUNT: usize>(
+    feature_type: [ConditionType; FEATURES_COUNT],
+    features: &[[ConditionArg; FEATURES_COUNT]],
     labels: &[usize],
 ) {
-    let feature_type: [(&ConditionType, usize); FEATURE_COUNT] =
+    let labeled_features = features
+        .iter()
+        .enumerate()
+        .map(|(idx, feature)| (feature, labels[idx]))
+        .collect::<Vec<(&[ConditionArg; FEATURES_COUNT], usize)>>();
+
+    let indexed_feature_type: [(&ConditionType, usize); FEATURES_COUNT] =
         array::from_fn(|idx| (&feature_type[idx], idx));
 
-    let node = build(feature_type, FEATURE_COUNT, features, labels);
-
-    // println!("{:#?}", node);
+    build(&labeled_features, indexed_feature_type, FEATURES_COUNT);
 }
