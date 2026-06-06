@@ -1,68 +1,59 @@
 use std::{array, default, fmt::Debug};
 
-const EPSILON: f64 = 0.000000000001;
-
 fn main() {
-    let feature_type = [FeatureType::Float, FeatureType::Float, FeatureType::Float];
-
-    let features = [
-        [
-            ConditionArg::Float(25.),
-            ConditionArg::Float(5.),
-            ConditionArg::Float(3.),
-        ],
-        [
-            ConditionArg::Float(32.),
-            ConditionArg::Float(8.),
-            ConditionArg::Float(5.),
-        ],
-        [
-            ConditionArg::Float(45.),
-            ConditionArg::Float(15.),
-            ConditionArg::Float(8.),
-        ],
-        [
-            ConditionArg::Float(28.),
-            ConditionArg::Float(6.),
-            ConditionArg::Float(4.),
-        ],
-        [
-            ConditionArg::Float(50.),
-            ConditionArg::Float(20.),
-            ConditionArg::Float(9.),
-        ],
-        [
-            ConditionArg::Float(35.),
-            ConditionArg::Float(10.),
-            ConditionArg::Float(6.),
-        ],
-        [
-            ConditionArg::Float(22.),
-            ConditionArg::Float(4.),
-            ConditionArg::Float(2.),
-        ],
-        [
-            ConditionArg::Float(48.),
-            ConditionArg::Float(18.),
-            ConditionArg::Float(7.),
-        ],
-        [
-            ConditionArg::Float(30.),
-            ConditionArg::Float(7.),
-            ConditionArg::Float(4.),
-        ],
-        [
-            ConditionArg::Float(40.),
-            ConditionArg::Float(12.),
-            ConditionArg::Float(7.),
-        ],
+    let feature_type = [
+        FeatureType::Float,
+        FeatureType::Float,
+        FeatureType::Float,
+        FeatureType::Float,
+        FeatureType::Float,
+        FeatureType::Float,
+        FeatureType::Float,
+        FeatureType::Float,
+        FeatureType::Float,
+        FeatureType::Float,
     ];
 
-    let labels = [0, 0, 1, 0, 1, 1, 0, 1, 0, 1];
+    let features = [
+        [15.2, 2.1, 5.3, 1.2, 8.1, 3.4, 2.1, 4.5, 1.2, 6.7],
+        [18.5, 3.2, 4.8, 2.1, 7.3, 2.8, 1.9, 5.1, 2.3, 5.4],
+        [12.8, 1.9, 6.1, 0.8, 9.2, 4.1, 3.2, 3.8, 0.9, 7.2],
+        [21.3, 4.5, 3.9, 3.2, 6.8, 2.2, 1.5, 6.2, 3.1, 4.8],
+        [14.1, 2.8, 5.7, 1.5, 8.5, 3.7, 2.8, 4.9, 1.8, 6.1],
+        [19.2, 3.7, 4.2, 2.8, 7.1, 2.5, 1.2, 5.5, 2.7, 5.2],
+        [11.5, 1.5, 6.8, 0.5, 9.8, 4.5, 3.8, 3.2, 0.5, 8.1],
+        [22.1, 5.2, 3.5, 3.8, 6.2, 1.9, 1.1, 6.8, 3.5, 4.2],
+        [16.8, 3.1, 5.1, 1.9, 7.9, 3.1, 2.4, 5.2, 2.1, 5.9],
+        [13.5, 2.4, 6.2, 1.1, 8.8, 3.9, 3.1, 4.1, 1.3, 7.5],
+        [20.5, 4.1, 4.0, 3.0, 7.0, 2.4, 1.8, 5.8, 2.9, 5.0],
+        [17.2, 3.4, 4.9, 2.2, 7.6, 2.9, 2.2, 5.0, 2.4, 5.7],
+        [14.8, 2.5, 5.5, 1.3, 8.3, 3.5, 2.6, 4.6, 1.6, 6.5],
+        [23.0, 5.5, 3.2, 4.0, 5.9, 1.5, 0.8, 7.0, 3.8, 4.0],
+        [16.2, 3.0, 5.3, 1.8, 8.0, 3.2, 2.3, 5.1, 2.0, 6.0],
+        [45.2, 12.1, 15.3, 11.2, 18.1, 13.4, 12.1, 14.5, 11.2, 16.7],
+        [48.5, 13.2, 14.8, 12.1, 17.3, 12.8, 11.9, 15.1, 12.3, 15.4],
+        [42.8, 11.9, 16.1, 10.8, 19.2, 14.1, 13.2, 13.8, 10.9, 17.2],
+        [51.3, 14.5, 13.9, 13.2, 16.8, 12.2, 11.5, 16.2, 13.1, 14.8],
+        [44.1, 12.8, 15.7, 11.5, 18.5, 13.7, 12.8, 14.9, 11.8, 16.1],
+        [49.2, 13.7, 14.2, 12.8, 17.1, 12.5, 11.2, 15.5, 12.7, 15.2],
+        [41.5, 11.5, 16.8, 10.5, 19.8, 14.5, 13.8, 13.2, 10.5, 18.1],
+        [52.1, 15.2, 13.5, 13.8, 16.2, 11.9, 11.1, 16.8, 13.5, 14.2],
+        [46.8, 13.1, 15.1, 11.9, 17.9, 13.1, 12.4, 15.2, 12.1, 15.9],
+        [43.5, 12.4, 16.2, 11.1, 18.8, 13.9, 13.1, 14.1, 11.3, 17.5],
+        [50.5, 14.1, 14.0, 13.0, 17.0, 12.4, 11.8, 15.8, 12.9, 15.0],
+        [47.2, 13.4, 14.9, 12.2, 17.6, 12.9, 12.2, 15.0, 12.4, 15.7],
+        [44.8, 12.5, 15.5, 11.3, 18.3, 13.5, 12.6, 14.6, 11.6, 16.5],
+        [53.0, 15.5, 13.2, 14.0, 15.9, 11.5, 10.8, 17.0, 13.8, 14.0],
+        [46.2, 13.0, 15.3, 11.8, 18.0, 13.2, 12.3, 15.1, 12.0, 16.0],
+    ]
+    .map(|data| data.map(|data| ConditionArg::Float(data)));
 
-    let node = build_tree(feature_type, &features, &labels);
-    println!("DONEEEE");
-    println!("{:#?}", node);
+    let labels = [
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    ];
+
+    let tree = build_tree(feature_type, &features, &labels);
+    println!("{:#?}", tree);
 }
 
 #[derive(Debug)]
@@ -141,6 +132,8 @@ struct Node<const FEATURES_COUNT: usize> {
 #[derive(Debug)]
 struct MinimumScore {
     weighted_entropy: f64,
+    left_entropy: f64,
+    right_entropy: f64,
     feature_idx: usize,
     able_idx: usize,
     left_empty: Option<usize>,
@@ -255,6 +248,8 @@ fn build<const FEATURES_COUNT: usize>(
                 } else {
                     minimum_score = Some(MinimumScore {
                         weighted_entropy,
+                        left_entropy,
+                        right_entropy,
                         feature_idx,
                         able_idx,
                         left_empty,
@@ -262,9 +257,15 @@ fn build<const FEATURES_COUNT: usize>(
                         condition_node: ConditionNode::Boolean(Feature(feature_idx)),
                     });
                 }
+
+                if weighted_entropy == 0. {
+                    break;
+                }
             }
             FeatureType::Float => {
                 let mut minimum: Option<(
+                    f64,
+                    f64,
                     f64,
                     ConditionNode,
                     usize,
@@ -372,6 +373,8 @@ fn build<const FEATURES_COUNT: usize>(
                         if minimum.0 > w_entropy {
                             *minimum = (
                                 w_entropy,
+                                left_entropy,
+                                right_entropy,
                                 ConditionNode::Float(Feature(feature_idx), candidate_feature),
                                 able_idx,
                                 feature_idx,
@@ -382,6 +385,8 @@ fn build<const FEATURES_COUNT: usize>(
                     } else {
                         minimum = Some((
                             w_entropy,
+                            left_entropy,
+                            right_entropy,
                             ConditionNode::Float(Feature(feature_idx), candidate_feature),
                             able_idx,
                             feature_idx,
@@ -397,30 +402,39 @@ fn build<const FEATURES_COUNT: usize>(
                     if minimum_score.weighted_entropy > minimum.0 {
                         *minimum_score = MinimumScore {
                             weighted_entropy: minimum.0,
-                            condition_node: minimum.1,
-                            able_idx: minimum.2,
-                            feature_idx: minimum.3,
-                            left_empty: minimum.4,
-                            right_empty: minimum.5,
+                            left_entropy: minimum.1,
+                            right_entropy: minimum.2,
+                            condition_node: minimum.3,
+                            able_idx: minimum.4,
+                            feature_idx: minimum.5,
+                            left_empty: minimum.6,
+                            right_empty: minimum.7,
                         };
                     }
                 } else {
                     minimum_score = Some(MinimumScore {
                         weighted_entropy: minimum.0,
-                        condition_node: minimum.1,
-                        able_idx: minimum.2,
-                        feature_idx: minimum.3,
-                        left_empty: minimum.4,
-                        right_empty: minimum.5,
+                        left_entropy: minimum.1,
+                        right_entropy: minimum.2,
+                        condition_node: minimum.3,
+                        able_idx: minimum.4,
+                        feature_idx: minimum.5,
+                        left_empty: minimum.6,
+                        right_empty: minimum.7,
                     });
+                }
+
+                //  immediately select homogenous
+                if minimum.0 == 0. {
+                    break;
                 }
             }
         }
 
         // println!("===========================");
     }
-    // println!("minimum features is {:?}", minimum_score.unwrap());
 
+    // println!("minimum features is {:?}", minimum_score.unwrap());
     // return Child::Class(0);
 
     let minimum_score = minimum_score.unwrap();
@@ -438,8 +452,8 @@ fn build<const FEATURES_COUNT: usize>(
     // minimum_scoreome((score, feature_idx, able_idx, left_empty, right_empty));
     let column = minimum_score.feature_idx;
 
-    let mut left_result = [0, 0];
-    let mut right_result = [0, 0];
+    let mut left_sample = [0, 0];
+    let mut right_sample = [0, 0];
     for (feature, label) in labeled_features {
         // if let ConditionArg::Boolean(status) = feature[column] {
         //     if status {
@@ -455,19 +469,19 @@ fn build<const FEATURES_COUNT: usize>(
             (ConditionArg::Boolean(status), _) => {
                 if status {
                     right_features.push((*feature, *label));
-                    right_result[*label] += 1;
+                    right_sample[*label] += 1;
                 } else {
                     left_features.push((*feature, *label));
-                    left_result[*label] += 1;
+                    left_sample[*label] += 1;
                 }
             }
             (ConditionArg::Float(value), ConditionNode::Float(_, compare)) => {
                 if value <= *compare {
                     left_features.push((*feature, *label));
-                    left_result[*label] += 1;
+                    left_sample[*label] += 1;
                 } else {
                     right_features.push((*feature, *label));
-                    right_result[*label] += 1;
+                    right_sample[*label] += 1;
                 }
             }
             _ => (),
@@ -490,10 +504,32 @@ fn build<const FEATURES_COUNT: usize>(
     //     println!("{:?}", feature);
     // }
 
+    // println!("{:?} | {:?}", left_sample, right_sample);
+
+    let left_early_stop = if minimum_score.left_entropy == 0. {
+        if left_sample[0] > left_sample[1] {
+            Some(Box::new(Child::Class(0)))
+        } else {
+            Some(Box::new(Child::Class(1)))
+        }
+    } else {
+        None
+    };
+
+    let right_early_stop = if minimum_score.right_entropy == 0. {
+        if right_sample[0] > right_sample[1] {
+            Some(Box::new(Child::Class(0)))
+        } else {
+            Some(Box::new(Child::Class(1)))
+        }
+    } else {
+        None
+    };
+
     let (left, right) = if (able_len - 1) == 0 {
         let left_klasifikasi = if let Some(left_empty) = minimum_score.left_empty {
             left_empty
-        } else if left_result[0] > left_result[1] {
+        } else if left_sample[0] > left_sample[1] {
             0
         } else {
             1
@@ -501,7 +537,7 @@ fn build<const FEATURES_COUNT: usize>(
 
         let right_klasifikasi = if let Some(right_empty) = minimum_score.right_empty {
             right_empty
-        } else if right_result[0] > right_result[1] {
+        } else if right_sample[0] > right_sample[1] {
             0
         } else {
             1
@@ -513,12 +549,16 @@ fn build<const FEATURES_COUNT: usize>(
         )
     } else {
         (
-            if let Some(left_empty) = minimum_score.left_empty {
+            if let Some(_) = left_early_stop {
+                Box::new(Child::Class(0))
+            } else if let Some(left_empty) = minimum_score.left_empty {
                 Box::new(Child::Class(left_empty))
             } else {
                 Box::new(build(&left_features, indexed_feature_type, able_len - 1))
             },
-            if let Some(right_empty) = minimum_score.right_empty {
+            if let Some(_) = right_early_stop {
+                Box::new(Child::Class(0))
+            } else if let Some(right_empty) = minimum_score.right_empty {
                 Box::new(Child::Class(right_empty))
             } else {
                 Box::new(build(&right_features, indexed_feature_type, able_len - 1))
@@ -528,8 +568,8 @@ fn build<const FEATURES_COUNT: usize>(
 
     let node = Node {
         condition: minimum_score.condition_node,
-        left: left,
-        right: right,
+        left: left_early_stop.unwrap_or(left),
+        right: right_early_stop.unwrap_or(right),
     };
 
     return Child::Node(node);
