@@ -60,7 +60,9 @@ fn main() {
 
     let labels = [0, 0, 1, 0, 1, 1, 0, 1, 0, 1];
 
-    build_tree(feature_type, &features, &labels);
+    let node = build_tree(feature_type, &features, &labels);
+    println!("DONEEEE");
+    println!("{:#?}", node);
 }
 
 #[derive(Debug)]
@@ -136,6 +138,7 @@ struct Node<const FEATURES_COUNT: usize> {
     right: Box<Child<FEATURES_COUNT>>,
 }
 
+#[derive(Debug)]
 struct MinimumScore {
     weighted_entropy: f64,
     feature_idx: usize,
@@ -165,7 +168,7 @@ fn build<const FEATURES_COUNT: usize>(
                 let mut left_result = [0, 0];
                 let mut right_result = [0, 0];
 
-                for (row_idx, (feature, label)) in labeled_features.iter().enumerate() {
+                for (row, (feature, label)) in labeled_features.iter().enumerate() {
                     // println!("{:?}", feature[column_idx]);
 
                     if let ConditionArg::Boolean(status) = feature[feature_idx] {
@@ -176,8 +179,8 @@ fn build<const FEATURES_COUNT: usize>(
                         }
                     } else {
                         panic!(
-                            "Error, data type in row {} is Boolean but found Float in data sequence {}",
-                            feature_idx, row_idx
+                            "Error, the data type in column {} is Float but a Boolean was found in the row {} in the column",
+                            feature_idx, row
                         );
                     }
                 }
@@ -261,28 +264,42 @@ fn build<const FEATURES_COUNT: usize>(
                 }
             }
             FeatureType::Float => {
-                let mut minimum: Option<(f64, ConditionNode, Option<usize>, Option<usize>)> = None;
-                for (candidate_features, _) in labeled_features {
+                let mut minimum: Option<(
+                    f64,
+                    ConditionNode,
+                    usize,
+                    usize,
+                    Option<usize>,
+                    Option<usize>,
+                )> = None;
+                for (row, (candidate_features, _)) in labeled_features.iter().enumerate() {
                     let mut left_sample = [0, 0];
                     let mut right_sample = [0, 0];
 
-                    let candidate_feature =
-                        if let ConditionArg::Float(value) = candidate_features[feature_idx] {
-                            value
-                        } else {
-                            panic!()
-                        };
+                    let candidate_feature = if let ConditionArg::Float(value) =
+                        candidate_features[feature_idx]
+                    {
+                        value
+                    } else {
+                        panic!(
+                            "Error, the data type in column {} is Float but a Boolean was found in the row {} in the column",
+                            feature_idx, row
+                        );
+                    };
 
-                    println!(
-                        "candidate feature\n{:?} in column {}\n",
-                        candidate_feature, feature_idx
-                    );
-                    println!("will be compared by");
-                    for (features, label) in labeled_features {
+                    // println!(
+                    //     "candidate feature\n{:?} in column {}\n",
+                    //     candidate_feature, feature_idx
+                    // );
+                    // println!("will be compared by");
+                    for (row, (features, label)) in labeled_features.iter().enumerate() {
                         let feature = if let ConditionArg::Float(value) = features[feature_idx] {
                             value
                         } else {
-                            panic!()
+                            panic!(
+                                "Error, the data type in column {} is Float but a Boolean was found in the row {} in the column",
+                                feature_idx, row
+                            );
                         };
 
                         if feature <= candidate_feature {
@@ -291,7 +308,7 @@ fn build<const FEATURES_COUNT: usize>(
                             right_sample[*label] += 1;
                         }
 
-                        println!("{:?} with label {:?}", feature, label);
+                        // println!("{:?} with label {:?}", feature, label);
                     }
 
                     // left entropy
@@ -341,22 +358,23 @@ fn build<const FEATURES_COUNT: usize>(
                     };
 
                     let parent_total = left_total + right_total;
-                    println!("({} / {}) * {}", left_total, parent_total, left_entropy);
                     let w_entropy = (left_total / parent_total) * left_entropy
                         + (right_total / parent_total) * right_entropy;
 
-                    println!("compare samples left: {:?}", left_sample);
-                    println!("compare samples right: {:?}", right_sample);
-                    println!("left entropy: {:?}", left_entropy);
-                    println!("right entropy: {:?}", right_entropy);
-                    println!("weighted entropy: {:?}", w_entropy);
-                    println!("----------------------");
+                    // println!("compare samples left: {:?}", left_sample);
+                    // println!("compare samples right: {:?}", right_sample);
+                    // println!("left entropy: {:?}", left_entropy);
+                    // println!("right entropy: {:?}", right_entropy);
+                    // println!("weighted entropy: {:?}", w_entropy);
+                    // println!("----------------------");
 
                     if let Some(minimum) = &mut minimum {
                         if minimum.0 > w_entropy {
                             *minimum = (
                                 w_entropy,
                                 ConditionNode::Float(Feature(feature_idx), candidate_feature),
+                                able_idx,
+                                feature_idx,
                                 left_empty,
                                 right_empty,
                             );
@@ -365,33 +383,35 @@ fn build<const FEATURES_COUNT: usize>(
                         minimum = Some((
                             w_entropy,
                             ConditionNode::Float(Feature(feature_idx), candidate_feature),
+                            able_idx,
+                            feature_idx,
                             left_empty,
                             right_empty,
                         ));
                     }
                 }
                 let minimum = minimum.unwrap();
-                println!("minimum value is {:?}\n", minimum);
+                // println!("minimum value is {:?}\n", minimum);
 
                 if let Some(minimum_score) = &mut minimum_score {
                     if minimum_score.weighted_entropy > minimum.0 {
                         *minimum_score = MinimumScore {
                             weighted_entropy: minimum.0,
                             condition_node: minimum.1,
-                            able_idx: able_idx,
-                            feature_idx: feature_idx,
-                            left_empty: minimum.2,
-                            right_empty: minimum.3,
+                            able_idx: minimum.2,
+                            feature_idx: minimum.3,
+                            left_empty: minimum.4,
+                            right_empty: minimum.5,
                         };
                     }
                 } else {
                     minimum_score = Some(MinimumScore {
                         weighted_entropy: minimum.0,
                         condition_node: minimum.1,
-                        able_idx: able_idx,
-                        feature_idx: feature_idx,
-                        left_empty: minimum.2,
-                        right_empty: minimum.3,
+                        able_idx: minimum.2,
+                        feature_idx: minimum.3,
+                        left_empty: minimum.4,
+                        right_empty: minimum.5,
                     });
                 }
             }
@@ -403,8 +423,11 @@ fn build<const FEATURES_COUNT: usize>(
 
     // return Child::Class(0);
 
-    // swap
     let minimum_score = minimum_score.unwrap();
+    // println!("minimum score: {:?}", minimum_score);
+
+    // return Child::Class(0);
+    // swap
     // let (feature_type, feature_idx) = indexed_feature_type[minimum_score.able_idx];
     indexed_feature_type.swap(minimum_score.able_idx, able_len - 1);
 
@@ -415,17 +438,39 @@ fn build<const FEATURES_COUNT: usize>(
     // minimum_scoreome((score, feature_idx, able_idx, left_empty, right_empty));
     let column = minimum_score.feature_idx;
 
-    let mut left_result = [1, 1];
-    let mut right_result = [1, 1];
+    let mut left_result = [0, 0];
+    let mut right_result = [0, 0];
     for (feature, label) in labeled_features {
-        if let ConditionArg::Boolean(status) = feature[column] {
-            if status {
-                right_features.push((*feature, *label));
-                right_result[*label] += 1;
-            } else {
-                left_features.push((*feature, *label));
-                left_result[*label] += 1;
+        // if let ConditionArg::Boolean(status) = feature[column] {
+        //     if status {
+        //         right_features.push((*feature, *label));
+        //         right_result[*label] += 1;
+        //     } else {
+        //         left_features.push((*feature, *label));
+        //         left_result[*label] += 1;
+        //     }
+        // }
+
+        match (feature[column], &minimum_score.condition_node) {
+            (ConditionArg::Boolean(status), _) => {
+                if status {
+                    right_features.push((*feature, *label));
+                    right_result[*label] += 1;
+                } else {
+                    left_features.push((*feature, *label));
+                    left_result[*label] += 1;
+                }
             }
+            (ConditionArg::Float(value), ConditionNode::Float(_, compare)) => {
+                if value <= *compare {
+                    left_features.push((*feature, *label));
+                    left_result[*label] += 1;
+                } else {
+                    right_features.push((*feature, *label));
+                    right_result[*label] += 1;
+                }
+            }
+            _ => (),
         }
     }
 
