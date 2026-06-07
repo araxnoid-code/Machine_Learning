@@ -1,82 +1,30 @@
+mod datasets;
+
 use std::{array, default, fmt::Debug};
 
 fn main() {
     let feature_type = [
         FeatureType::Float,
         FeatureType::Float,
+        FeatureType::Boolean,
         FeatureType::Float,
+        FeatureType::Boolean,
         FeatureType::Float,
+        FeatureType::Boolean,
         FeatureType::Float,
-        FeatureType::Float,
-        FeatureType::Float,
-        FeatureType::Float,
-        FeatureType::Float,
+        FeatureType::Boolean,
         FeatureType::Float,
     ];
 
-    let labels = [
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1,
-        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-    ];
-
-    let features = [
-        // KELAS 0 (25 sampel) - dengan noise dan overlap
-        [18.5, 3.2, 5.1, 2.3, 7.8, 3.5, 2.4, 4.8, 1.9, 6.2],
-        [22.1, 4.1, 4.5, 3.1, 6.9, 2.8, 1.7, 5.5, 2.6, 5.4],
-        [15.3, 2.4, 6.2, 1.5, 8.9, 4.2, 3.1, 3.9, 1.1, 7.3],
-        [35.2, 8.5, 12.1, 9.2, 15.3, 11.2, 10.5, 12.1, 9.5, 13.2], // NOISE: nilai tinggi tapi kelas 0
-        [19.8, 3.5, 4.8, 2.6, 7.4, 3.1, 2.0, 5.0, 2.2, 5.8],
-        [14.2, 2.1, 6.5, 1.2, 9.3, 4.5, 3.4, 3.5, 0.8, 7.8],
-        [42.1, 10.2, 14.5, 11.3, 17.2, 12.8, 11.9, 14.2, 11.1, 15.5], // NOISE: nilai sangat tinggi
-        [20.5, 3.8, 4.9, 2.8, 7.2, 3.0, 2.1, 5.2, 2.4, 5.6],
-        [16.8, 2.9, 5.5, 1.9, 8.2, 3.7, 2.7, 4.4, 1.5, 6.6],
-        [23.5, 4.5, 4.2, 3.4, 6.5, 2.5, 1.4, 5.8, 2.9, 5.0],
-        [13.1, 1.8, 7.0, 0.9, 10.1, 4.8, 3.9, 3.1, 0.5, 8.5],
-        [38.5, 9.2, 13.2, 10.5, 16.5, 11.8, 11.2, 13.5, 10.2, 14.8], // NOISE: overlap dengan kelas 1
-        [21.2, 3.9, 4.6, 2.9, 7.0, 2.9, 1.9, 5.3, 2.5, 5.5],
-        [17.5, 3.1, 5.3, 2.1, 7.9, 3.4, 2.5, 4.6, 1.8, 6.4],
-        [24.8, 4.8, 4.0, 3.6, 6.2, 2.2, 1.2, 6.0, 3.1, 4.8],
-        [12.5, 1.5, 7.2, 0.6, 10.5, 5.0, 4.2, 2.8, 0.3, 8.9],
-        [28.5, 5.5, 8.5, 6.2, 11.5, 8.5, 7.5, 9.2, 6.5, 10.5], // NOISE: di zona tengah
-        [19.2, 3.3, 5.0, 2.4, 7.5, 3.2, 2.2, 4.9, 2.1, 6.0],
-        [15.8, 2.6, 5.8, 1.6, 8.6, 3.9, 2.9, 4.1, 1.3, 7.0],
-        [22.5, 4.2, 4.4, 3.2, 6.7, 2.6, 1.6, 5.6, 2.7, 5.2],
-        [45.0, 12.5, 16.5, 13.0, 19.0, 14.2, 13.5, 15.5, 12.5, 17.0], // OUTLIER ekstrim
-        [18.2, 3.0, 5.2, 2.2, 7.6, 3.3, 2.3, 4.7, 2.0, 6.1],
-        [14.5, 2.2, 6.3, 1.3, 9.0, 4.3, 3.2, 3.7, 1.0, 7.5],
-        [21.8, 4.0, 4.7, 3.0, 6.8, 2.7, 1.8, 5.4, 2.6, 5.3],
-        [16.2, 2.8, 5.4, 1.8, 8.1, 3.6, 2.6, 4.5, 1.6, 6.3],
-        // KELAS 1 (25 sampel) - dengan noise dan overlap
-        [48.5, 13.2, 15.8, 12.5, 18.5, 13.8, 12.8, 15.2, 12.5, 16.5],
-        [52.1, 14.5, 14.2, 13.8, 16.8, 12.2, 11.5, 16.5, 13.8, 15.2],
-        [45.3, 12.1, 16.5, 11.5, 19.2, 14.5, 13.5, 14.5, 11.5, 17.2],
-        [19.5, 3.4, 5.2, 2.5, 7.7, 3.3, 2.3, 4.9, 2.1, 6.0], // NOISE: nilai rendah tapi kelas 1
-        [50.2, 13.8, 15.1, 13.0, 17.5, 12.9, 12.1, 15.8, 13.1, 15.8],
-        [44.1, 11.5, 16.8, 10.8, 19.5, 14.8, 14.0, 13.8, 10.9, 17.8],
-        [55.0, 15.5, 13.5, 14.5, 16.0, 11.5, 10.8, 17.2, 14.2, 14.5],
-        [25.5, 5.2, 8.2, 5.5, 10.5, 7.5, 6.5, 8.2, 5.5, 9.5], // NOISE: di zona tengah
-        [47.2, 12.8, 15.5, 12.0, 18.0, 13.2, 12.5, 15.0, 12.2, 16.2],
-        [42.5, 10.8, 17.0, 10.2, 19.8, 15.0, 14.2, 13.2, 10.5, 18.0],
-        [53.5, 14.8, 13.8, 14.0, 16.2, 11.8, 11.2, 16.8, 13.5, 14.8],
-        [30.2, 6.5, 9.5, 7.2, 12.5, 9.2, 8.5, 10.2, 7.5, 11.5], // OVERLAP dengan zona kelas 0
-        [46.5, 12.5, 15.2, 11.8, 17.8, 13.0, 12.2, 14.8, 11.8, 15.5],
-        [49.8, 13.5, 14.5, 12.8, 17.2, 12.5, 11.8, 15.5, 12.8, 15.0],
-        [43.2, 11.2, 16.2, 11.0, 18.8, 14.2, 13.8, 14.0, 11.2, 17.0],
-        [51.5, 14.2, 14.0, 13.5, 16.5, 12.0, 11.0, 16.0, 13.2, 14.5],
-        [22.5, 4.5, 7.5, 4.5, 9.5, 6.5, 5.5, 7.5, 4.5, 8.5], // OVERLAP
-        [48.0, 13.0, 15.6, 12.2, 18.2, 13.5, 12.6, 15.3, 12.3, 16.0],
-        [41.5, 10.5, 17.2, 10.0, 20.0, 15.2, 14.5, 13.0, 10.0, 18.5],
-        [54.2, 15.0, 13.2, 14.2, 15.8, 11.2, 10.5, 17.0, 14.0, 14.0],
-        [28.5, 5.8, 8.8, 6.2, 11.8, 8.2, 7.2, 9.2, 6.2, 10.5], // OVERLAP
-        [45.8, 12.2, 15.9, 11.5, 18.5, 13.6, 12.8, 14.9, 12.0, 16.3],
-        [50.5, 14.0, 14.8, 13.2, 17.0, 12.4, 11.6, 15.9, 13.0, 15.3],
-        [44.5, 11.8, 16.5, 11.2, 19.0, 14.4, 13.6, 14.2, 11.4, 17.5],
-        [52.5, 14.8, 13.6, 14.0, 16.2, 11.8, 11.0, 16.5, 13.5, 14.8],
-    ]
-    .map(|row| row.map(|data| ConditionArg::Float(data)));
+    let (features, labels) = datasets::get_data();
 
     let tree = build_tree(feature_type, &features, &labels);
-    println!("{:#?}", tree);
+    for (feature, label) in features.iter().zip(labels.iter()) {
+        let pred = tree.input(feature).unwrap();
+        println!("pred: {} | actual: {}", pred, label);
+    }
+    // tree.input(input);
+    // println!("{:#?}", tree);
 }
 
 #[derive(Debug)]
@@ -122,25 +70,40 @@ enum Child<const FEATURES_COUNT: usize> {
 }
 
 impl<const FEATURES_COUNT: usize> Child<FEATURES_COUNT> {
-    pub fn input(&self, input: [ConditionArg; FEATURES_COUNT]) -> usize {
+    pub fn input(&self, input: &[ConditionArg; FEATURES_COUNT]) -> Result<usize, &str> {
         match self {
             Child::Node(node) => {
                 //
-                if let ConditionNode::Boolean(Feature(idx)) = &node.condition {
-                    if let ConditionArg::Boolean(status) = input[*idx] {
-                        if status {
-                            node.right.input(input)
+                match &node.condition {
+                    ConditionNode::Boolean(Feature(idx)) => {
+                        if let ConditionArg::Boolean(status) = input[*idx] {
+                            if status {
+                                node.right.input(input)
+                            } else {
+                                node.left.input(input)
+                            }
                         } else {
-                            node.left.input(input)
+                            return Err(
+                                "The input data type is float, but the decision tree is boolean",
+                            );
                         }
-                    } else {
-                        panic!()
                     }
-                } else {
-                    panic!()
+                    ConditionNode::Float(Feature(idx), cmp) => {
+                        if let ConditionArg::Float(value) = input[*idx] {
+                            if value <= *cmp {
+                                node.left.input(input)
+                            } else {
+                                node.right.input(input)
+                            }
+                        } else {
+                            return Err(
+                                "The input data type is boolean, but the decision tree is float",
+                            );
+                        }
+                    }
                 }
             }
-            Child::Class(class) => *class,
+            Child::Class(class) => Ok(*class),
         }
     }
 }
@@ -181,17 +144,17 @@ fn build<const FEATURES_COUNT: usize>(
         match feature_type {
             FeatureType::Boolean => {
                 // left (false)
-                let mut left_result = [0, 0];
-                let mut right_result = [0, 0];
+                let mut left_sample = [0, 0];
+                let mut right_sample = [0, 0];
 
                 for (row, (feature, label)) in labeled_features.iter().enumerate() {
                     // println!("{:?}", feature[column_idx]);
 
                     if let ConditionArg::Boolean(status) = feature[feature_idx] {
                         if status {
-                            right_result[*label] += 1;
+                            right_sample[*label] += 1;
                         } else {
-                            left_result[*label] += 1;
+                            left_sample[*label] += 1;
                         }
                     } else {
                         panic!(
@@ -203,10 +166,10 @@ fn build<const FEATURES_COUNT: usize>(
 
                 // left entropy
                 let mut left_empty = None;
-                let left_total = (left_result[0] + left_result[1]) as f64;
+                let left_total = (left_sample[0] + left_sample[1]) as f64;
                 if left_total == 0. {
                     let classification =
-                        if right_result[0] + left_result[0] > left_result[1] + right_result[1] {
+                        if right_sample[0] + left_sample[0] > left_sample[1] + right_sample[1] {
                             0
                         } else {
                             1
@@ -215,20 +178,20 @@ fn build<const FEATURES_COUNT: usize>(
                 }
 
                 let left_entropy = if left_empty.is_none() {
-                    -(left_result[0] as f64 / left_total)
-                        * (left_result[0] as f64 / left_total).log2()
-                        - (left_result[1] as f64 / left_total)
-                            * (left_result[1] as f64 / left_total).log2()
+                    -(left_sample[0] as f64 / left_total)
+                        * (left_sample[0] as f64 / left_total).log2()
+                        - (left_sample[1] as f64 / left_total)
+                            * (left_sample[1] as f64 / left_total).log2()
                 } else {
                     0.
                 };
 
                 // right entropy
                 let mut right_empty = None;
-                let right_total = (right_result[0] + right_result[1]) as f64;
+                let right_total = (right_sample[0] + right_sample[1]) as f64;
                 if right_total == 0. {
                     let classification =
-                        if right_result[0] + left_result[0] > right_result[1] + left_result[1] {
+                        if right_sample[0] + left_sample[0] > right_sample[1] + left_sample[1] {
                             0
                         } else {
                             1
@@ -237,10 +200,10 @@ fn build<const FEATURES_COUNT: usize>(
                 }
 
                 let right_entropy = if right_empty.is_none() {
-                    -(right_result[0] as f64 / right_total)
-                        * (right_result[0] as f64 / right_total).log2()
-                        - (right_result[1] as f64 / right_total)
-                            * (right_result[1] as f64 / right_total).log2()
+                    -(right_sample[0] as f64 / right_total)
+                        * (right_sample[0] as f64 / right_total).log2()
+                        - (right_sample[1] as f64 / right_total)
+                            * (right_sample[1] as f64 / right_total).log2()
                 } else {
                     0.
                 };
