@@ -1,5 +1,3 @@
-use std::{array, default, fmt::Debug};
-
 use decision_tree::{ConditionArg as Arg, FeatureType, build_tree};
 
 fn main() {
